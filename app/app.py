@@ -1,8 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends
 from schemas import CreatePost
+from db import Post, create_db_and_tables, get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await create_db_and_tables()
+    yield
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 text_posts = {
     1: {"title": "The Art of Coding", "content": "Exploring the beauty behind clean and efficient code."},
@@ -38,7 +46,7 @@ def create_post(post: CreatePost)-> CreatePost:
 @app.delete("/post/{id}")
 def delete_post(id: int):
     if id in text_posts:
-        del text_posts(id)
-        return {"message": "post deleted successfully"}
+       del text_posts[id]
+       return {"message": "post deleted successfully"}
     raise HTTPException(status_code=404, detail="post not found")
 
